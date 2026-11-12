@@ -80,6 +80,9 @@ Tests use an isolated in-memory SQLite database and do not require Neon:
 pytest
 ```
 
-Set `CORS_ORIGINS` to a comma-separated list when the frontend's development
-origin differs from ports 3000/3001. Production secrets and `DATABASE_URL`
-should be provided by the deployment environment, not source control.
+Set `CORS_ORIGINS` to a comma-separated list of exact frontend origins. The
+default allows `http://localhost:3000`, `http://localhost:3001`, and
+`https://meal-plan-trackerrrr.vercel.app`. Set the same list in the deployed
+API's environment settings so the hosted frontend can call it. Production
+secrets and `DATABASE_URL` should be provided by the deployment environment,
+not source control.

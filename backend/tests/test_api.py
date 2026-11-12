@@ -13,6 +13,26 @@ def auth_headers(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
+@pytest.mark.parametrize(
+    "origin",
+    [
+        "http://localhost:3000",
+        "https://meal-plan-trackerrrr.vercel.app",
+    ],
+)
+def test_frontend_origins_are_allowed(client: TestClient, origin: str):
+    response = client.options(
+        "/api/v1/health",
+        headers={
+            "Origin": origin,
+            "Access-Control-Request-Method": "GET",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == origin
+
+
 def test_health_and_database_readiness(authenticated_client):
     client, _ = authenticated_client
 

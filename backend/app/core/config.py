@@ -8,7 +8,10 @@ class Settings(BaseSettings):
     database_url: str = ""
     jwt_secret_key: str = ""
     access_token_expire_minutes: int = Field(default=60, gt=0)
-    cors_origins: str = "http://localhost:3000,http://localhost:3001"
+    cors_origins: str = (
+        "http://localhost:3000,http://localhost:3001,"
+        "https://meal-plan-trackerrrr.vercel.app"
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env",
