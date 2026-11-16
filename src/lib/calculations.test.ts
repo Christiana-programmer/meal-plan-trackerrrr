@@ -67,12 +67,46 @@ describe("budget calculations", () => {
     );
 
     expect(summary.remainingBalanceKobo).toBe(20_000);
-    expect(summary.dailyAllowanceKobo).toBe(2_000);
+    expect(summary.dailyAllowanceKobo).toBe(10_000);
+    expect(summary.dailyAllowanceRemainingKobo).toBe(0);
     expect(warnings.map(({ title }) => title)).toContain(
       "Your meal credit is running low",
     );
     expect(warnings.map(({ title }) => title)).toContain(
       "Today’s spending is above your daily guide",
     );
+  });
+
+  it("keeps today's guide fixed while reducing the amount left for today", () => {
+    const beforeExpense = calculateDashboardSummary(budget, [], "2026-05-01");
+    const afterExpense = calculateDashboardSummary(
+      budget,
+      [expense(3_000)],
+      "2026-05-01",
+    );
+
+    expect(beforeExpense.dailyAllowanceKobo).toBe(10_000);
+    expect(afterExpense.dailyAllowanceKobo).toBe(10_000);
+    expect(afterExpense.dailyAllowanceRemainingKobo).toBe(7_000);
+
+    const afterAnotherExpense = calculateDashboardSummary(
+      budget,
+      [expense(3_000), expense(2_000)],
+      "2026-05-01",
+    );
+    expect(afterAnotherExpense.dailyAllowanceKobo).toBe(10_000);
+    expect(afterAnotherExpense.dailyAllowanceRemainingKobo).toBe(5_000);
+  });
+
+  it("redistributes unused credit across remaining days at the next day boundary", () => {
+    const yesterdayExpense = expense(5_000, "2026-05-01");
+    const nextDaySummary = calculateDashboardSummary(
+      budget,
+      [yesterdayExpense],
+      "2026-05-02",
+    );
+
+    expect(nextDaySummary.dailyAllowanceKobo).toBe(10_556);
+    expect(nextDaySummary.dailyAllowanceRemainingKobo).toBe(10_556);
   });
 });

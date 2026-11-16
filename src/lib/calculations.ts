@@ -134,6 +134,7 @@ export function calculateDashboardSummary(
       remainingDays: 0,
       daysUntilStart: 0,
       dailyAllowanceKobo: 0,
+      dailyAllowanceRemainingKobo: 0,
       progressPercent: 0,
       status: "completed",
     };
@@ -151,11 +152,30 @@ export function calculateDashboardSummary(
       : 0;
   const daysUntilStart =
     status === "upcoming" ? daysBetween(currentDate, budget.startDate) : 0;
+  const expensesBeforeToday = expenses.filter(
+    (expense) => expense.transactionDate < currentDate,
+  );
+  const startOfDayBalanceKobo = Math.max(
+    0,
+    budget.totalCreditsKobo - calculateTotalSpent(expensesBeforeToday),
+  );
   const dailyAllowanceKobo =
     status === "upcoming"
       ? Math.round(budget.totalCreditsKobo / budget.durationDays)
-      : status === "active"
-        ? calculateDailyAllowance(remainingBalanceKobo, remainingDays)
+      : (status === "active" || status === "exhausted") && remainingDays > 0
+        ? calculateDailyAllowance(startOfDayBalanceKobo, remainingDays)
+        : 0;
+  const spentTodayKobo = calculateTotalSpent(
+    expenses.filter((expense) => expense.transactionDate === currentDate),
+  );
+  const dailyAllowanceRemainingKobo =
+    status === "upcoming"
+      ? dailyAllowanceKobo
+      : status === "active" || status === "exhausted"
+        ? Math.min(
+            remainingBalanceKobo,
+            Math.max(0, dailyAllowanceKobo - spentTodayKobo),
+          )
         : 0;
 
   return {
@@ -165,6 +185,7 @@ export function calculateDashboardSummary(
     remainingDays,
     daysUntilStart,
     dailyAllowanceKobo,
+    dailyAllowanceRemainingKobo,
     progressPercent:
       budget.totalCreditsKobo > 0
         ? Math.min(100, (totalSpentKobo / budget.totalCreditsKobo) * 100)

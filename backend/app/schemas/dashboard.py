@@ -15,6 +15,7 @@ class DashboardSummary(ApiSchema):
     remaining_days: int
     days_until_start: int
     daily_allowance_kobo: int
+    daily_allowance_remaining_kobo: int
     progress_percent: float
     status: BudgetStatus
 

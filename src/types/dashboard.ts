@@ -10,6 +10,7 @@ export type DashboardSummary = {
   remainingDays: number;
   daysUntilStart: number;
   dailyAllowanceKobo: number;
+  dailyAllowanceRemainingKobo: number;
   progressPercent: number;
   status: BudgetStatus;
 };

@@ -46,6 +46,7 @@ def get_dashboard_summary(
             remainingDays=0,
             daysUntilStart=0,
             dailyAllowanceKobo=0,
+            dailyAllowanceRemainingKobo=0,
             progressPercent=0,
             status="completed",
         )
@@ -61,14 +62,35 @@ def get_dashboard_summary(
     days_until_start = (
         (budget.start_date - today).days if status == "upcoming" else 0
     )
+    spent_before_today = sum(
+        expense.amount_kobo
+        for expense in expenses
+        if expense.transaction_date < today
+    )
+    start_of_day_balance = max(
+        0, budget.total_credits_kobo - spent_before_today
+    )
     if status == "upcoming":
         daily_allowance = round_kobo(
             budget.total_credits_kobo / budget.duration_days
         )
-    elif status == "active" and remaining_days > 0:
-        daily_allowance = round_kobo(remaining / remaining_days)
+    elif status in {"active", "exhausted"} and remaining_days > 0:
+        daily_allowance = round_kobo(start_of_day_balance / remaining_days)
     else:
         daily_allowance = 0
+    spent_today = sum(
+        expense.amount_kobo
+        for expense in expenses
+        if expense.transaction_date == today
+    )
+    if status == "upcoming":
+        daily_allowance_remaining = daily_allowance
+    elif status in {"active", "exhausted"}:
+        daily_allowance_remaining = min(
+            remaining, max(0, daily_allowance - spent_today)
+        )
+    else:
+        daily_allowance_remaining = 0
 
     return DashboardSummary(
         totalCreditsKobo=budget.total_credits_kobo,
@@ -77,6 +99,7 @@ def get_dashboard_summary(
         remainingDays=remaining_days,
         daysUntilStart=days_until_start,
         dailyAllowanceKobo=daily_allowance,
+        dailyAllowanceRemainingKobo=daily_allowance_remaining,
         progressPercent=(
             min(100, total_spent / budget.total_credits_kobo * 100)
             if budget.total_credits_kobo > 0
@@ -138,24 +161,12 @@ def get_dashboard_warnings(
             )
         )
 
-    spent_before_today = sum(
-        expense.amount_kobo
-        for expense in expenses
-        if expense.transaction_date < today
-    )
     spent_today = sum(
         expense.amount_kobo
         for expense in expenses
         if expense.transaction_date == today
     )
-    start_of_day_balance = max(
-        0, budget.total_credits_kobo - spent_before_today
-    )
-    start_of_day_guide = (
-        round_kobo(start_of_day_balance / summary.remaining_days)
-        if summary.remaining_days > 0
-        else 0
-    )
+    start_of_day_guide = summary.daily_allowance_kobo
     exceeded_daily_guide = spent_today > start_of_day_guide
     if exceeded_daily_guide:
         warnings.append(

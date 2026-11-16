@@ -114,6 +114,7 @@ export function DashboardView({ user, onLogout }: DashboardViewProps) {
   const [isBudgetDialogOpen, setBudgetDialogOpen] = useState(false);
   const [refreshVersion, setRefreshVersion] = useState(0);
   const [notice, setNotice] = useState("");
+  const [balancesHidden, setBalancesHidden] = useState(false);
 
   useEffect(() => {
     let isCurrent = true;
@@ -282,7 +283,7 @@ export function DashboardView({ user, onLogout }: DashboardViewProps) {
         ) : dashboard?.budget ? (
           <>
             <section
-              aria-labelledby="balance-heading"
+              aria-labelledby="daily-guide-heading"
               className="relative overflow-hidden rounded-3xl bg-[#1d603e] p-6 text-white shadow-[0_24px_70px_-38px_rgba(22,70,43,0.65)] sm:p-8 lg:p-10"
             >
               <div
@@ -294,23 +295,39 @@ export function DashboardView({ user, onLogout }: DashboardViewProps) {
                 className="pointer-events-none absolute right-0 -top-20 size-56 rounded-full border border-white/10"
               />
               <div className="relative grid gap-8 lg:grid-cols-[1fr_300px] lg:items-end">
-                <div>
+                <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-3">
                     <p className="text-sm font-medium text-white/75">
-                      Available balance
+                      {dashboard.summary.status === "upcoming"
+                        ? "Starting daily allowance"
+                        : "Recommended for today"}
                     </p>
                     <BudgetStatusBadge status={dashboard.summary.status} />
                   </div>
                   <h2
-                    id="balance-heading"
-                    className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl"
+                    id="daily-guide-heading"
+                    className="mt-3 text-5xl font-semibold tracking-tight sm:text-6xl lg:text-7xl"
                   >
-                    {formatNaira(dashboard.summary.remainingBalanceKobo)}
+                    {formatNaira(dashboard.summary.dailyAllowanceKobo)}
                   </h2>
-                  <p className="mt-2 text-sm text-white/70">
-                    of {formatNaira(dashboard.summary.totalCreditsKobo)} meal
-                    credits
+                  <p className="mt-2 text-sm leading-6 text-white/70">
+                    {dashboard.summary.status === "upcoming"
+                      ? "Your initial daily guide for this budget."
+                      : dashboard.summary.status === "active"
+                          ? "Fixed for today. Any unused credit is spread across the days left tomorrow."
+                          : dashboard.summary.status === "exhausted"
+                            ? "Your meal credit is exhausted. No credit remains to spend today."
+                            : "This budget period has ended."}
                   </p>
+                  {dashboard.summary.status === "active" ||
+                  dashboard.summary.status === "exhausted" ? (
+                    <p className="mt-3 text-sm font-medium text-white">
+                        Left in today’s guide:{" "}
+                        {formatNaira(
+                          dashboard.summary.dailyAllowanceRemainingKobo,
+                        )}
+                    </p>
+                  ) : null}
 
                   <div className="mt-8 max-w-xl">
                     <div className="flex items-center justify-between gap-3 text-xs text-white/80">
@@ -334,22 +351,59 @@ export function DashboardView({ user, onLogout }: DashboardViewProps) {
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-white/15 bg-white/10 p-5 backdrop-blur-sm">
-                  <p className="text-sm font-medium text-white/75">
-                    {dashboard.summary.status === "upcoming"
-                      ? "Starting daily allowance"
-                      : "Recommended for today"}
-                  </p>
-                  <p className="mt-2 text-3xl font-semibold tracking-tight">
-                    {formatNaira(dashboard.summary.dailyAllowanceKobo)}
-                  </p>
-                  <p className="mt-2 text-xs leading-5 text-white/70">
-                    {dashboard.summary.status === "upcoming"
-                      ? "Your initial daily guide for this budget."
-                      : dashboard.summary.status === "active"
-                        ? "Based on your remaining balance and days."
-                        : "There is no daily allowance for this period."}
-                  </p>
+                <div
+                  aria-label="Meal credit balances"
+                  className="rounded-2xl border border-white/15 bg-white/10 p-5 backdrop-blur-sm"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-medium text-white/75">
+                      Credit balances
+                    </p>
+                    <button
+                      type="button"
+                      aria-label={balancesHidden ? "Show balances" : "Hide balances"}
+                      aria-pressed={balancesHidden}
+                      onClick={() => setBalancesHidden((hidden) => !hidden)}
+                      className="flex size-10 shrink-0 items-center justify-center rounded-xl text-white/80 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                    >
+                      <Icon
+                        name={balancesHidden ? "eyeOff" : "eye"}
+                        className="size-5"
+                      />
+                    </button>
+                  </div>
+                  <dl id="dashboard-credit-balances" className="mt-3 grid gap-4">
+                    <div>
+                      <dt className="text-xs text-white/70">Available balance</dt>
+                      <dd
+                        aria-label={
+                          balancesHidden
+                            ? "Hidden"
+                            : formatNaira(dashboard.summary.remainingBalanceKobo)
+                        }
+                        className="mt-1 text-2xl font-semibold tracking-tight"
+                      >
+                        {balancesHidden
+                          ? "••••••"
+                          : formatNaira(dashboard.summary.remainingBalanceKobo)}
+                      </dd>
+                    </div>
+                    <div className="border-t border-white/15 pt-4">
+                      <dt className="text-xs text-white/70">Total meal credit</dt>
+                      <dd
+                        aria-label={
+                          balancesHidden
+                            ? "Hidden"
+                            : formatNaira(dashboard.summary.totalCreditsKobo)
+                        }
+                        className="mt-1 text-lg font-semibold"
+                      >
+                        {balancesHidden
+                          ? "••••••"
+                          : formatNaira(dashboard.summary.totalCreditsKobo)}
+                      </dd>
+                    </div>
+                  </dl>
                 </div>
               </div>
             </section>
@@ -363,7 +417,11 @@ export function DashboardView({ user, onLogout }: DashboardViewProps) {
                   key={card.key}
                   label={card.label}
                   description={card.description}
-                  value={formatNaira(dashboard.summary[card.key])}
+                  value={
+                    card.key === "totalCreditsKobo" && balancesHidden
+                      ? "••••••"
+                      : formatNaira(dashboard.summary[card.key])
+                  }
                   icon={card.icon}
                   color={card.color}
                 />
@@ -487,8 +545,17 @@ export function DashboardView({ user, onLogout }: DashboardViewProps) {
                   <BudgetStatusBadge status={dashboard.summary.status} />
                 </div>
 
-                <p className="mt-7 text-3xl font-semibold tracking-tight">
-                  {formatNairaCompact(dashboard.summary.totalCreditsKobo)}
+                <p
+                  aria-label={
+                    balancesHidden
+                      ? "Hidden"
+                      : formatNaira(dashboard.summary.totalCreditsKobo)
+                  }
+                  className="mt-7 text-3xl font-semibold tracking-tight"
+                >
+                  {balancesHidden
+                    ? "••••••"
+                    : formatNairaCompact(dashboard.summary.totalCreditsKobo)}
                 </p>
                 <p className="mt-1 text-sm text-muted">Total meal credits</p>
 

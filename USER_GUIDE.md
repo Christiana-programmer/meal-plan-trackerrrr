@@ -33,8 +33,11 @@ calculates what is left and gives you a guide for your spending.
   exhausted credit period.
 
 The daily guide starts as your credit divided across the number of days you
-choose. While the period is active, it changes based on the remaining balance
-and remaining days. It is a recommendation, not a fixed daily limit. The app
+choose. At the start of each new Lagos calendar day, Mealwise divides the
+remaining credit by the days left and keeps that guide fixed for the rest of
+the day. Each meal purchase reduces the amount still available for that day.
+Unused credit is carried forward by redistributing it across the remaining
+days. The daily guide is a recommendation, not a fixed daily limit. The app
 does prevent an expense from exceeding the remaining credit.
 
 ## Your journey through the app

@@ -27,6 +27,7 @@ describe("API-backed frontend services", () => {
         remainingDays: 0,
         daysUntilStart: 0,
         dailyAllowanceKobo: 0,
+        dailyAllowanceRemainingKobo: 0,
         progressPercent: 0,
         status: "completed",
       },

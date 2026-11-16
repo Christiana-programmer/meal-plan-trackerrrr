@@ -26,6 +26,10 @@ Open [http://localhost:3000](http://localhost:3000) to view the app.
 - Financial values are stored as integer kobo in the frontend. The dashboard
   formats them as Nigerian Naira and calculates balances and allowances from
   the budget and expenses.
+- The daily allowance is set at the start of each Lagos calendar day from the
+  remaining credit divided by the days left. It stays fixed until the next
+  day; expenses reduce the amount still available for the current day. Unused
+  credit is redistributed across the remaining days at the next day boundary.
 - The dashboard warns when spending for today passes that day’s recommended
   guide, when at least 80% of a credit has been spent, when spending is more
   than 10% of the total credit (or ₦500, whichever is higher) ahead of the

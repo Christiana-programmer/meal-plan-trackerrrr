@@ -167,6 +167,8 @@ def test_budget_expense_crud_and_dashboard_contract(authenticated_client):
     assert dashboard.status_code == 200
     dashboard_data = dashboard.json()
     assert dashboard_data["summary"]["remainingBalanceKobo"] == 20_000
+    assert dashboard_data["summary"]["dailyAllowanceKobo"] == 10_000
+    assert dashboard_data["summary"]["dailyAllowanceRemainingKobo"] == 0
     assert dashboard_data["summary"]["status"] == "active"
     assert dashboard_data["recentExpenses"][0]["description"] == "Lunch"
     assert "Your meal credit is running low" in [
@@ -210,6 +212,67 @@ def test_budget_expense_crud_and_dashboard_contract(authenticated_client):
         ]
         == 100_000
     )
+
+
+def test_daily_allowance_stays_fixed_until_next_day(
+    authenticated_client, monkeypatch
+):
+    client, token = authenticated_client
+    headers = auth_headers(token)
+    today = get_lagos_today()
+    budget = client.post(
+        "/api/v1/budgets",
+        headers=headers,
+        json={
+            "totalCreditsKobo": 100_000,
+            "durationDays": 10,
+            "startDate": today.isoformat(),
+        },
+    )
+    assert budget.status_code == 201
+
+    expense = client.post(
+        "/api/v1/expenses",
+        headers=headers,
+        json={
+            "amountKobo": 2_000,
+            "description": "Lunch",
+            "transactionDate": today.isoformat(),
+        },
+    )
+    assert expense.status_code == 201
+
+    same_day_summary = client.get(
+        "/api/v1/dashboard", headers=headers
+    ).json()["summary"]
+    assert same_day_summary["dailyAllowanceKobo"] == 10_000
+    assert same_day_summary["dailyAllowanceRemainingKobo"] == 8_000
+
+    second_expense = client.post(
+        "/api/v1/expenses",
+        headers=headers,
+        json={
+            "amountKobo": 3_000,
+            "description": "Snack",
+            "transactionDate": today.isoformat(),
+        },
+    )
+    assert second_expense.status_code == 201
+    after_second_expense = client.get(
+        "/api/v1/dashboard", headers=headers
+    ).json()["summary"]
+    assert after_second_expense["dailyAllowanceKobo"] == 10_000
+    assert after_second_expense["dailyAllowanceRemainingKobo"] == 5_000
+
+    monkeypatch.setattr(
+        "app.api.routes.dashboard.get_lagos_today",
+        lambda: today + timedelta(days=1),
+    )
+    next_day_summary = client.get(
+        "/api/v1/dashboard", headers=headers
+    ).json()["summary"]
+    assert next_day_summary["dailyAllowanceKobo"] == 10_556
+    assert next_day_summary["dailyAllowanceRemainingKobo"] == 10_556
 
 
 def test_users_cannot_access_another_users_expenses(authenticated_client):
