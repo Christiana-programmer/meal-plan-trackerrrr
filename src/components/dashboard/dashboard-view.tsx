@@ -300,7 +300,7 @@ export function DashboardView({ user, onLogout }: DashboardViewProps) {
                     <p className="text-sm font-medium text-white/75">
                       {dashboard.summary.status === "upcoming"
                         ? "Starting daily allowance"
-                        : "Recommended for today"}
+                        : "Left in today’s guide"}
                     </p>
                     <BudgetStatusBadge status={dashboard.summary.status} />
                   </div>
@@ -308,26 +308,19 @@ export function DashboardView({ user, onLogout }: DashboardViewProps) {
                     id="daily-guide-heading"
                     className="mt-3 text-5xl font-semibold tracking-tight sm:text-6xl lg:text-7xl"
                   >
-                    {formatNaira(dashboard.summary.dailyAllowanceKobo)}
+                    {formatNaira(
+                      dashboard.summary.dailyAllowanceRemainingKobo,
+                    )}
                   </h2>
                   <p className="mt-2 text-sm leading-6 text-white/70">
                     {dashboard.summary.status === "upcoming"
                       ? "Your initial daily guide for this budget."
                       : dashboard.summary.status === "active"
-                          ? "Fixed for today. Any unused credit is spread across the days left tomorrow."
-                          : dashboard.summary.status === "exhausted"
-                            ? "Your meal credit is exhausted. No credit remains to spend today."
-                            : "This budget period has ended."}
+                        ? `Daily budget (fixed today): ${formatNaira(dashboard.summary.dailyAllowanceKobo)}. Unused credit is spread across the days left tomorrow.`
+                        : dashboard.summary.status === "exhausted"
+                          ? `Daily budget set for today: ${formatNaira(dashboard.summary.dailyAllowanceKobo)}. No meal credit remains to spend.`
+                          : "This budget period has ended."}
                   </p>
-                  {dashboard.summary.status === "active" ||
-                  dashboard.summary.status === "exhausted" ? (
-                    <p className="mt-3 text-sm font-medium text-white">
-                        Left in today’s guide:{" "}
-                        {formatNaira(
-                          dashboard.summary.dailyAllowanceRemainingKobo,
-                        )}
-                    </p>
-                  ) : null}
 
                   <div className="mt-8 max-w-xl">
                     <div className="flex items-center justify-between gap-3 text-xs text-white/80">
